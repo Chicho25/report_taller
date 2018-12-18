@@ -9,17 +9,58 @@ if (!isset($_SESSION['session'])) {
     header('Location: index.php');
 }
 
+if (isset($_POST['eliminar_issues'])) {
+    DeleteRec("issues_temp", "id=".$_POST['eliminar_issues']);
+}
+
 if (isset($_POST['registro'])) {
 
    $reg_reporte = array("id_register" => $_SESSION['session']['id'],
                         "fecha" => date("Y-m-d H:i:s"),
                         "stat" => 1,
                         "id_equipo" => $_POST['equipo'],
-                        "description" => $_POST['descripcion'],
                         "ubicacion" => $_POST['ubicacion'],
                         "colaborador" => $_POST['colaborador']);
 
    $insert = InsertRec("report", $reg_reporte);
+
+   foreach ($_POST['issue_temp'] as $key => $value) {
+
+     $array_issues = array("description" => $value,
+                           "id_report" => $insert,
+                           "date_time" => date("Y-m-d H:i:s"),
+                           "stat" => 1,
+                           "id_user" => $_SESSION['session']['id']);
+
+     InsertRec("issues", $array_issues);
+
+   }
+
+   ################## images the report ################
+
+if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
+
+  $cuenta_imagen = 0;
+
+  foreach ($_FILES['images']['tmp_name'] as $key => $image_fiel) {
+
+       $cuenta_imagen++;
+
+       $target_dir = "images/";
+       $target_file = $target_dir . basename($_FILES['images']["name"][$key]);
+       $imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+       $filename = $target_dir . $insert.$cuenta_imagen.".".$imageFileType;
+       $filenameThumbR = $target_dir . $insert."_thumb.".$imageFileType;
+       if (move_uploaded_file($_FILES['images']["tmp_name"][$key], $filename)){
+           //makeThumbnailsWithGivenWidthHeight($target_dir, $imageFileType, $nId, 600, 400);
+           InsertRec("image_issue", array("rute" => $filenameThumbR,
+                                          "id_report" => $insert,
+                                          "date_time" => date("Y-m-d H:i:s")));
+      }
+   }
+}
+
+   DeleteRec("issues_temp", "(1=1)");
 
    if($reg_reporte){
 
@@ -52,23 +93,28 @@ if (isset($_POST['registro'])) {
                     <div class="form-group">
                       <label for="equipo"><b>Fecha: '.date("Y-m-d H:i:s").'</b></label><br>
                       <label for="equipo"><b>Equipo: </b>';
-                      $equipos = GetRecords("SELECT * FROM crm_craner WHERE id =".$_POST['equipo']);
+                      $equipos = GetRecords("SELECT * FROM vehicle WHERE id =".$_POST['equipo']);
                       foreach ($equipos as $key => $value) {
-                        $quipo = $value['name_craner'];
+                        $quipo = $value['name'].' || '.$value['license_plate'];
                       }
              $html .=' '.$quipo.'</label>
                     </div>
                     <div class="form-group">
-                      <label for="descripcion"><b>Descripción:</b> '.$_POST['descripcion'].' </label>
+                      <label for="descripcion"><b>Issues:</b> </label><br>';
+                      $rec = GetRecords("SELECT * FROM issues WHERE id_report =".$insert);
+                      foreach ($rec as $key => $value) {
+                          $html .='<label> - '.$value['description'].'</label><br>';
+                       }
+                    $html .='
                     </div>
                     <div class="form-group">
                       <label for="descripcion"><b>Ubicación: </b> '.$_POST['ubicacion'].'</label>
                     </div>
                     <div class="form-group">
                       <label for="equipo"><b>Quien reporta:</b> ';
-                         $empleado = GetRecords("SELECT * FROM collaborator WHERE id =".$_POST['colaborador']);
+                         $empleado = GetRecords("SELECT * FROM employee WHERE id =".$_POST['colaborador']);
                          foreach ($empleado as $key => $value) {
-                           $colaborador = $value['firs_name'].' '.$value['last_name'];
+                           $colaborador = $value['firstname'].' '.$value['lastname'];
                          }
                     $html .=' '.$colaborador.'
                       </label>
@@ -87,13 +133,13 @@ if (isset($_POST['registro'])) {
       $subject = 'Reporte Ramen Taller';
       $fileName = $nomrbe_archivo.'.pdf';
       $email_ventas = "taller@gruasshl.com";
-      $personas = "tayron.arrieta@gruasshl.com";
+      $personas = "call.center@gruasshl.com";
       $to = $email_ventas.' ,'.$personas;
       $repEmail = (isset($email_ventas) && $email_ventas != "") ? $email_ventas : '';
       $conpania_nombre = 'SHL';
       $repName = 'Taller SHL';
       $fileatt = $mpdf->Output($fileName, 'S');
-      $attachment = chunk_split(base64_encode($fileatt));
+      //$attachment = chunk_split(base64_encode($fileatt));
       $eol = PHP_EOL;
       $separator = md5(time());
       $headers = 'From: '.$repName.' <'.$repEmail.'>'.$eol;
@@ -110,7 +156,7 @@ if (isset($_POST['registro'])) {
       $message .= "Content-Type: application/pdf; name=\"".$fileName."\"".$eol;
       $message .= "Content-Transfer-Encoding: base64".$eol;
       $message .= "Content-Disposition: attachment".$eol.$eol;
-      $message .= $attachment.$eol;
+      //$message .= $attachment.$eol;
       $message .= "--".$separator."--";
 
       mail($to, $subject, $message, $headers);
@@ -127,6 +173,22 @@ if (isset($_POST['registro'])) {
     <meta charset="utf-8">
     <title>Ramen Taller</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css">
+    <!-- Images file css
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">-->
+    <script>
+    function preview_images()
+    {
+     var total_file=document.getElementById("images").files.length;
+     for(var i=0;i<total_file;i++)
+     {
+      $('#image_preview').append("<div class='col-md-2'><img class='img-responsive' width='200' height='200' src='"+URL.createObjectURL(event.target.files[i])+"'></div>");
+     }
+    }
+    </script>
+    <link rel="stylesheet" href="css/images_file.css">
   </head>
   <body>
     <header>
@@ -178,11 +240,11 @@ if (isset($_POST['registro'])) {
               <h3 class="text-center">Registro de Reporte</h3>
               <div class="form-group">
                 <label for="equipo">Equipo</label>
-                <select name="equipo" class="form-control">
+                <select name="equipo" class="selectpicker" data-live-search="true">
                   <option value="">Seleccionar</option>
-                  <?php $equipos = GetRecords("SELECT * FROM crm_craner"); ?>
+                  <?php $equipos = GetRecords("SELECT * FROM vehicle where stat = 1"); ?>
                   <?php foreach ($equipos as $key => $value) { ?>
-                    <option value="<?php echo $value['id']; ?>"><?php echo $value['name_craner']; ?></option>
+                    <option value="<?php echo $value['id']; ?>"><?php echo $value['name'].' || '.$value['license_plate']; ?></option>
                   <?php } ?>
                 </select>
               </div>
@@ -190,6 +252,9 @@ if (isset($_POST['registro'])) {
                 <label for="descripcion">Descripción</label>
                 <!--<textarea rows="10" cols="50" name="descripcion" class="form-control"></textarea>-->
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo">Agregar ISSUE</button>
+                <div id="issues">
+
+                </div>
               </div>
               <div class="form-group">
                 <label for="descripcion">Ubicación</label>
@@ -197,26 +262,32 @@ if (isset($_POST['registro'])) {
               </div>
               <div class="form-group">
                 <label for="equipo">Quien reporta?</label>
-                <select name="colaborador" class="form-control">
+                <select name="colaborador" class="selectpicker" data-live-search="true">
                   <option value="">Seleccionar</option>
-                  <?php $empleado = GetRecords("SELECT * FROM collaborator"); ?>
+                  <?php $empleado = GetRecords("SELECT * FROM employee where stat = 1"); ?>
                   <?php foreach ($empleado as $key => $value) { ?>
-                    <option value="<?php echo $value['id']; ?>"><?php echo $value['firs_name'].' '.$value['last_name']; ?></option>
+                    <option value="<?php echo $value['id']; ?>"><?php echo $value['firstname'].' '.$value['lastname']; ?></option>
                   <?php } ?>
                 </select>
               </div>
+               <div class="col-md-6">
+                   <input type="file" class="form-control" id="images" name="images[]" onchange="preview_images();" multiple/>
+               </div>
+               <div class="col-md-6">
+               </div>
+              <div class="row" id="image_preview"></div>
               <button class="btn btn-lg btn-primary btn-block" type="submit" name="registro">Registrar</button>
             </div>
           </div>
         </form>
       </main>
 
-      <!-- ########### Modal #################-->
+      <!-- ########### Modal Agregar #################-->
       <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+              <h5 class="modal-title" id="exampleModalLabel">Registrar issue</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -224,24 +295,153 @@ if (isset($_POST['registro'])) {
             <div class="modal-body">
               <form>
                 <div class="form-group">
-                  <label for="recipient-name" class="col-form-label">Recipient:</label>
-                  <input type="text" class="form-control" id="recipient-name">
-                </div>
-                <div class="form-group">
-                  <label for="message-text" class="col-form-label">Message:</label>
-                  <textarea class="form-control" id="message-text"></textarea>
+                  <label for="message-text" class="col-form-label">Descripción:</label>
+                  <textarea class="form-control" id="message-text" autofocus></textarea>
                 </div>
               </form>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Send message</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+              <button type="button" id="send_mensaje" class="btn btn-primary" data-dismiss="modal">Guardar</button>
             </div>
           </div>
         </div>
       </div>
+      <!-- #################  Modal Eliminar  ###################-->
+      <?php
+      $rec = GetRecords("SELECT * FROM issues_temp where id_user =".$_SESSION['session']['id']);
+      foreach ($rec as $key => $value) { ?>
+      <div class="modal fade" id="exampleModalEliminar<?php echo $value['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Eliminar Issue</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <h6 style="color:red;">Esta seguro que desea eliminar el Issue</h6>
+            </div>
+            <div class="modal-footer">
+              <br>
+              <form class="" action="" method="post">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <input type="hidden" name="eliminar_issues" value="<?php echo $value['id']; ?>">
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    <?php } ?>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <!-- Latest compiled and minified JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js"></script>
+
+<!-- (Optional) Latest compiled and minified JavaScript translation files -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/i18n/defaults-*.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $.post("issues.php", { todo: 1 }, function(data){
+            $("#issues").html(data);
+        });
+      });
+    </script>
+    <script language="javascript">
+      $(document).ready(function(){
+          $("#send_mensaje").click(function () {
+              $("#message-text").each(function () {
+                  mensaje=$(this).val();
+                  $.post("issues.php", { mensaje: mensaje }, function(data){
+                      $("#issues").html(data);
+                  });
+                  $(this).val('');
+              });
+         });
+      });
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>-->
+    <script type="text/javascript" src="http://www.expertphp.in/js/jquery.form.js"></script>
+    <script type="text/javascript">
+    $('#add_more').click(function() {
+       "use strict";
+       $(this).before($("<div/>", {
+         id: 'filediv'
+       }).fadeIn('slow').append(
+         $("<input/>", {
+           name: 'file[]',
+           type: 'file',
+           id: 'file',
+           multiple: 'multiple',
+           accept: 'image/*'
+         })
+       ));
+     });
+
+     $('#upload').click(function(e) {
+       "use strict";
+       e.preventDefault();
+
+       if (window.filesToUpload.length === 0 || typeof window.filesToUpload === "undefined") {
+         alert("No files are selected.");
+         return false;
+       }
+
+       // Now, upload the files below...
+       // https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications#Handling_the_upload_process_for_a_file.2C_asynchronously
+     });
+
+     deletePreview = function (ele, i) {
+       "use strict";
+       try {
+         $(ele).parent().remove();
+         window.filesToUpload.splice(i, 1);
+       } catch (e) {
+         console.log(e.message);
+       }
+     }
+
+     $("#file").on('change', function() {
+       "use strict";
+
+       // create an empty array for the files to reside.
+       window.filesToUpload = [];
+
+       if (this.files.length >= 1) {
+         $("[id^=previewImg]").remove();
+         $.each(this.files, function(i, img) {
+           var reader = new FileReader(),
+             newElement = $("<div id='previewImg" + i + "' class='previewBox'><img /></div>"),
+             deleteBtn = $("<span class='delete' onClick='deletePreview(this, " + i + ")'>X</span>").prependTo(newElement),
+             preview = newElement.find("img");
+
+           reader.onloadend = function() {
+             preview.attr("src", reader.result);
+             preview.attr("alt", img.name);
+           };
+
+           try {
+             window.filesToUpload.push(document.getElementById("file").files[i]);
+           } catch (e) {
+             console.log(e.message);
+           }
+
+           if (img) {
+             reader.readAsDataURL(img);
+           } else {
+             preview.src = "";
+           }
+
+           newElement.appendTo("#filediv");
+         });
+       }
+     });
+    </script>
   </body>
 </html>

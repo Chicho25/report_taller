@@ -10,15 +10,20 @@ if (isset($_SESSION['session'])) {
 }
 
 if (isset($_POST['user'], $_POST['pass'])) {
+
+  $username = $_POST['user'];
+  $password = encryptIt($_POST['pass']);
+  $username = strip_tags(trim($username));
+
     $user = GetRecords("SELECT
                         *,
                         count(*) as contar
                         FROM
                         users
                         WHERE
-                        user_name like '%".$_POST['user']."%'
+                        user like '%".$username."%'
                         and
-                        pass like '%".$_POST['pass']."%'");
+                        password like '%".$password."%'");
 
       foreach ($user as $key => $value) {
               $contar = $value['contar'];

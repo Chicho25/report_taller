@@ -50,7 +50,7 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
        $target_file = $target_dir . basename($_FILES['images']["name"][$key]);
        $imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
        $filename = $target_dir . $insert.$cuenta_imagen.".".$imageFileType;
-       $filenameThumbR = $target_dir . $insert."_thumb.".$imageFileType;
+       $filenameThumbR = $target_dir . $insert.$cuenta_imagen."_thumb.".$imageFileType;
        if (move_uploaded_file($_FILES['images']["tmp_name"][$key], $filename)){
            //makeThumbnailsWithGivenWidthHeight($target_dir, $imageFileType, $nId, 600, 400);
            InsertRec("image_issue", array("rute" => $filenameThumbR,
@@ -91,6 +91,7 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
                 <div class="row">
                   <div class="col-12">
                     <div class="form-group">
+                      <label for="equipo"><b>Reporte Numero#: '.$insert.'</b></label><br>
                       <label for="equipo"><b>Fecha: '.date("Y-m-d H:i:s").'</b></label><br>
                       <label for="equipo"><b>Equipo: </b>';
                       $equipos = GetRecords("SELECT * FROM vehicle WHERE id =".$_POST['equipo']);
@@ -117,7 +118,11 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
                            $colaborador = $value['firstname'].' '.$value['lastname'];
                          }
                     $html .=' '.$colaborador.'
-                      </label>
+                      </label><br>
+                    <label for="descripcion"><b>Imagenes: </b> </label><br>
+                    https://ofertadeviaje.com/tallerramen/images_report.php?id_report='.$insert.'';
+
+                  $html .='
                     </div>
                   </div>
                 </div>
@@ -131,14 +136,16 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
       //$mpdf->AddPage();
 
       $subject = 'Reporte Ramen Taller';
-      $fileName = $nomrbe_archivo.'.pdf';
+      //$fileName = $nomrbe_archivo.'.pdf';
+      //$email_ventas = "tayron.arrieta@gruasshl.com";
+      //$personas = "tayronperez17@gmail.com";
       $email_ventas = "taller@gruasshl.com";
       $personas = "call.center@gruasshl.com";
       $to = $email_ventas.' ,'.$personas;
       $repEmail = (isset($email_ventas) && $email_ventas != "") ? $email_ventas : '';
       $conpania_nombre = 'SHL';
       $repName = 'Taller SHL';
-      $fileatt = $mpdf->Output($fileName, 'S');
+      //$fileatt = $mpdf->Output($fileName, 'S');
       //$attachment = chunk_split(base64_encode($fileatt));
       $eol = PHP_EOL;
       $separator = md5(time());
@@ -153,7 +160,7 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
       $message .= $html;
       $message .= "Content-Transfer-Encoding: 8bit".$eol.$eol;
       $message .= "--".$separator.$eol;
-      $message .= "Content-Type: application/pdf; name=\"".$fileName."\"".$eol;
+      //$message .= "Content-Type: application/pdf; name=\"".$fileName."\"".$eol;
       $message .= "Content-Transfer-Encoding: base64".$eol;
       $message .= "Content-Disposition: attachment".$eol.$eol;
       //$message .= $attachment.$eol;

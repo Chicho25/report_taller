@@ -1,6 +1,9 @@
 <?php
 ob_start();
+ini_set("session.cookie_lifetime","7200");
+ini_set("session.gc_maxlifetime","7200");
 session_start();
+
 include('include/config.php');
 include('include/defs.php');
 $mensaje = "";
@@ -38,13 +41,11 @@ if (isset($_POST['registro'])) {
 
    ################## images the report ################
 
-if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
+if(isset($_FILES['images']) && $_FILES['images']["name"] != ''){
 
   $cuenta_imagen = 0;
 
   foreach ($_FILES['images']['tmp_name'] as $key => $image_fiel) {
-
-       $cuenta_imagen++;
 
        $target_dir = "images/";
        $target_file = $target_dir . basename($_FILES['images']["name"][$key]);
@@ -56,6 +57,9 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
            InsertRec("image_issue", array("rute" => $filenameThumbR,
                                           "id_report" => $insert,
                                           "date_time" => date("Y-m-d H:i:s")));
+
+           $cuenta_imagen++;
+
       }
    }
 }
@@ -118,9 +122,12 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
                            $colaborador = $value['firstname'].' '.$value['lastname'];
                          }
                     $html .=' '.$colaborador.'
-                      </label><br>
-                    <label for="descripcion"><b>Imagenes: </b> </label><br>
-                    https://ofertadeviaje.com/tallerramen/images_report.php?id_report='.$insert.'';
+                      </label><br>';
+                    if (isset($cuenta_imagen) && $cuenta_imagen > 0) {
+                      $html .='<label for="descripcion"><b>Imagenes: </b> </label><br>
+                      https://www.gruasshl.com/report_taller/images_report.php?id_report='.$insert.'';
+                    }
+
 
                   $html .='
                     </div>
@@ -138,7 +145,7 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
       $subject = 'Reporte Ramen Taller';
       //$fileName = $nomrbe_archivo.'.pdf';
       //$email_ventas = "tayron.arrieta@gruasshl.com";
-      //$personas = "tayronperez17@gmail.com";
+      //$personas = "tayronperez17@gmail.com taller@gruasshl.com";
       $email_ventas = "taller@gruasshl.com";
       $personas = "call.center@gruasshl.com";
       $to = $email_ventas.' ,'.$personas;
@@ -198,47 +205,7 @@ if(isset($_FILES['images']) && $_FILES['images']['tmp_name'] != ""){
     <link rel="stylesheet" href="css/images_file.css">
   </head>
   <body>
-    <header>
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-          <a class="navbar-brand" href="#">Ramen Taller</a>
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Reportes
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <a class="dropdown-item" href="#">Registrar Reporte</a>
-                  <a class="dropdown-item" href="#">Ver Reportes</a>
-                </div>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Mantenimiento
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <a class="dropdown-item" href="#">Registrar Equipo</a>
-                  <a class="dropdown-item" href="#">Ver Equipos</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Registrar Colaborador</a>
-                  <a class="dropdown-item" href="#">Ver Colaboradores</a>
-                </div>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="salir.php">Salir</a>
-              </li>
-            </ul>
-            <!--<form class="form-inline my-2 my-lg-0">
-              <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-            </form>-->
-          </div>
-        </nav>
-      </header>
+    <?php include('menu.php'); ?>
       <main class="container">
         <form class="" action="" method="post" enctype="multipart/form-data">
           <div class="row">

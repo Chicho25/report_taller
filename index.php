@@ -1,5 +1,7 @@
 <?php
 ob_start();
+ini_set("session.cookie_lifetime","7200");
+ini_set("session.gc_maxlifetime","7200");
 session_start();
 include('include/config.php');
 include('include/defs.php');
@@ -54,7 +56,7 @@ if (isset($_POST['user'], $_POST['pass'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="Tayron">
-    <title>Ramen Taller</title>
+    <title>Call Center</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
   </head>
   <body class="text-center">

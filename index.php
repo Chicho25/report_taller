@@ -1,86 +1,137 @@
 <?php
-ob_start();
-ini_set("session.cookie_lifetime","7200");
-ini_set("session.gc_maxlifetime","7200");
+
 session_start();
+ob_start();
 include('include/config.php');
 include('include/defs.php');
-$mensaje = "";
 
-if (isset($_SESSION['session'])) {
-    header('Location: main.php');
-}
+if (isset($_POST['Submit'])) {
+    $obtener_registro = GetRecords("select count(*) as contar, stat, id from users where user = 'callcenter' and password = '".$_POST['pwd']."'");
+    $comprobar = $obtener_registro[0]['contar'];
 
-if (isset($_POST['user'], $_POST['pass'])) {
+    if ($comprobar >= 1) {
+       $_SESSION['disponible'] = $obtener_registro[0]['stat'];
+       $_SESSION['id_user'] = $obtener_registro[0]['id'];
 
-  $username = $_POST['user'];
-  $password = encryptIt($_POST['pass']);
-  $username = strip_tags(trim($username));
+       header("Location: main.php");
+       exit;
 
-    $user = GetRecords("SELECT
-                        *,
-                        count(*) as contar
-                        FROM
-                        users
-                        WHERE
-                        user like '%".$username."%'
-                        and
-                        password like '%".$password."%'");
-
-      foreach ($user as $key => $value) {
-              $contar = $value['contar'];
-      }
-
-      if ($contar > 0) {
-          session_start();
-          $sessiones = array('id' => $user[0]['id']);
-          $_SESSION['session'] = $sessiones;
-          header('Location: main.php');
-      }else{
-        $mensaje = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                      <strong>Usuario no valido</strong> el usuario no es valido
-                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>';
-
-      }
+    }
 
 }
-
  ?>
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="Tayron">
-    <title>Call Center</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-  </head>
-  <body class="text-center">
-    <main class="container h-100">
-      <?php echo $mensaje; ?>
-      <div class="row h-100 justify-content-center align-items-center">
-        <form class="form" method="post">
-          <img class="mb-4" src="shl_logo.png" alt="">
-          <h1 class="h3 mb-3 font-weight-normal">Por favor Ingrese</h1>
-          <div class="form-group">
-            <label for="inputEmail" class="sr-only">Usuario</label>
-            <input name="user" type="text" id="" class="form-control" placeholder="Usuario" required autofocus autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="inputPassword" class="sr-only">Contraseña</label>
-            <input name="pass" type="password" id="inputPassword" class="form-control" placeholder="Contraseña" required>
-          </div>
-          <button class="btn btn-lg btn-primary btn-block" type="submit">Ingresar</button>
-          <p class="mt-5 mb-3 text-muted">&copy; Gruas SHL </p>
-        </form>
-      </div>
-    </main>
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-  </body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Call Center</title>
+<style type="text/css">
+body {
+font-size: 100%;
+font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+/*padding-top: 100px;*/
+}
+label { display: block; margin-top: 10px; }
+#login { width: 300px; height: 400px; margin: 0 auto; border: 1px solid #eee; padding: 25px; }
+a { color: #0066CC; text-decoration: none; border-bottom: 1px dotted #0066cc; }
+#submit_butt { margin-top: 300px; position: absolute;}
+h3 { margin-top: 0; text-align: center;}
+
+.botonTeclado{
+	width:60px;
+  height:60px;
+  background-color:#03800b;
+  margin: 5px;
+  padding:10px;
+  -webkit-border-radius: 50px;
+  -moz-border-radius: 50px;
+  border-radius: 50px;
+  font-size:16px;
+  line-height:32px;
+  text-transform: uppercase;
+  float:left;
+	color:white;
+}
+
+.botonTeclado:hover{
+	opacity: 0.50;
+  -moz-opacity: .50;
+  filter:alpha (opacity=50);
+	color:white;
+}
+
+.ingreso{
+	width:150px;
+  height:80px;
+  background-color:#03800b;
+  margin: 5px;
+	margin-left: 75px;
+  padding:10px;
+  font-size:16px;
+  line-height:32px;
+  text-transform: uppercase;
+  float:left;
+	color:white;
+
+}
+
+.ingreso:hover{
+	opacity: 0.50;
+  -moz-opacity: .50;
+  filter:alpha (opacity=50);
+	color:white;
+}
+
+
+
+</style>
+
+<link href="keyboardstyle.css" type="text/css" rel="stylesheet" />
+
+</head>
+
+<body>
+<div class="">
+	<img src="image/1.png" alt="" width="200" style="display:block; margin:auto;">
+</div>
+<div id="login">
+
+<h3>Call Center</h3>
+<form action="" method="post" id="loginform">
+	<label for="username"></label>
+	<input type="hidden" name="username" id="username" value="callcenter" />
+
+	<label for="pwd"></label>
+	<input type="hidden" name="pwd" id="pwd" style="position:absolute;"/>
+
+	<input type="submit" name="Submit" id="submit_butt" class="ingreso" value="Ingresar" />
+</form>
+
+<div id="keyboard">
+	<div id="row0">
+		<input name="1" class="botonTeclado" type="button" value="1" />
+		<input name="2" class="botonTeclado" type="button" value="2" />
+		<input name="3" class="botonTeclado" type="button" value="3" />
+		<input name="4" class="botonTeclado" type="button" value="4" />
+		<input name="5" class="botonTeclado" type="button" value="5" />
+		<input name="6" class="botonTeclado" type="button" value="6" />
+		<input name="7" class="botonTeclado" type="button" value="7" />
+		<input name="8" class="botonTeclado" type="button" value="8" />
+		<input name="9" class="botonTeclado" type="button" value="9" />
+		<input name="0" class="botonTeclado" type="button" value="0" />
+	</div>
+
+</div>
+
+</div>
+
+<script type="text/javascript" src="jquery-1.2.6.min.js"></script>
+<script type="text/javascript" src="jquery-ui-personalized-1.5.2.min.js"></script>
+<script type="text/javascript" src="jquery-fieldselection.js"></script>
+
+<script type="text/javascript" src="vkeyboard.js"></script>
+
+</body>
+
 </html>

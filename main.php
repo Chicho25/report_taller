@@ -8,7 +8,7 @@ include('include/config.php');
 include('include/defs.php');
 $mensaje = "";
 
-if (!isset($_SESSION['session'])) {
+if (!isset($_SESSION['disponible'])) {
     header('Location: index.php');
 }
 
@@ -18,7 +18,7 @@ if (isset($_POST['eliminar_issues'])) {
 
 if (isset($_POST['registro'])) {
 
-   $reg_reporte = array("id_register" => $_SESSION['session']['id'],
+   $reg_reporte = array("id_register" => $_SESSION['id_user'],
                         "fecha" => date("Y-m-d H:i:s"),
                         "stat" => 1,
                         "id_equipo" => $_POST['equipo'],
@@ -33,7 +33,7 @@ if (isset($_POST['registro'])) {
                            "id_report" => $insert,
                            "date_time" => date("Y-m-d H:i:s"),
                            "stat" => 1,
-                           "id_user" => $_SESSION['session']['id']);
+                           "id_user" => $_SESSION['id_user']);
 
      InsertRec("issues", $array_issues);
 
@@ -283,7 +283,7 @@ if(isset($_FILES['images']) && $_FILES['images']["name"] != ''){
       </div>
       <!-- #################  Modal Eliminar  ###################-->
       <?php
-      $rec = GetRecords("SELECT * FROM issues_temp where id_user =".$_SESSION['session']['id']);
+      $rec = GetRecords("SELECT * FROM issues_temp where id_user =".$_SESSION['id_user']);
       foreach ($rec as $key => $value) { ?>
       <div class="modal fade" id="exampleModalEliminar<?php echo $value['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">

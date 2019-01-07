@@ -7,7 +7,7 @@ session_start();
 include('include/config_mega_ramen.php');
 include('include/defs.php');
 
-if (!isset($_SESSION['session'])) {
+if (!isset($_SESSION['id_user'])) {
     header('Location: index.php');
 }
 
@@ -52,7 +52,7 @@ if (isset($_POST['registro'])) {
                        "id_type_work"=>$_POST['id_type_work'],
                        "inspection"=>$_POST['inspection'],
                        "stat" => 3,
-                       "log_user_register" => $_SESSION['session']['id'],
+                       "log_user_register" => $_SESSION['id_user'],
                        "log_time" => date("Y-m-d H:i:s"),
                        "exterior_sys" =>1);
 

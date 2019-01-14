@@ -6,6 +6,41 @@ session_start();
 
 include('include/config.php');
 include('include/defs.php');
+
+function resizeImagen($ruta, $nombre, $alto, $ancho,$nombreN,$extension){
+    $rutaImagenOriginal = $ruta.$nombre;
+    if($extension == 'GIF' || $extension == 'gif'){
+    $img_original = imagecreatefromgif($rutaImagenOriginal);
+    }
+    if($extension == 'jpg' || $extension == 'JPG'){
+    $img_original = imagecreatefromjpeg($rutaImagenOriginal);
+    }
+    if($extension == 'png' || $extension == 'PNG'){
+    $img_original = imagecreatefrompng($rutaImagenOriginal);
+    }
+    $max_ancho = $ancho;
+    $max_alto = $alto;
+    list($ancho,$alto)=getimagesize($rutaImagenOriginal);
+    $x_ratio = $max_ancho / $ancho;
+    $y_ratio = $max_alto / $alto;
+    if( ($ancho <= $max_ancho) && ($alto <= $max_alto) ){//Si ancho
+  	$ancho_final = $ancho;
+		$alto_final = $alto;
+	} elseif (($x_ratio * $alto) < $max_alto){
+		$alto_final = ceil($x_ratio * $alto);
+		$ancho_final = $max_ancho;
+	} else{
+		$ancho_final = ceil($y_ratio * $ancho);
+		$alto_final = $max_alto;
+	}
+    $tmp=imagecreatetruecolor($ancho_final,$alto_final);
+    imagecopyresampled($tmp,$img_original,0,0,0,0,$ancho_final, $alto_final,$ancho,$alto);
+    imagedestroy($img_original);
+    $calidad=70;
+    imagejpeg($tmp,$ruta.$nombreN,$calidad);
+
+}
+
 $mensaje = "";
 
 if (!isset($_SESSION['disponible'])) {
@@ -33,34 +68,73 @@ if (isset($_POST['registro'])) {
                            "id_report" => $insert,
                            "date_time" => date("Y-m-d H:i:s"),
                            "stat" => 1,
-                           "id_user" => $_SESSION['id_user']);
+                           "id_user" => $_SESSION['id_user'] 
+                           );
 
      InsertRec("issues", $array_issues);
+
+     $array_feet_issues = array("summary" => $value, 
+                                "description" => $_POST['ubicacion'],
+                                "stat" => 1, 
+                                "id_vehicle" => $_POST['equipo'], 
+                                "reportedOn" => date("Y-m-d H:i:s"), 
+                                "id_reportedby" => $_POST['colaborador'], 
+                                "id_priority" => 1,
+                                "stat_issue" => 0, 
+                                "isClosed" => 0, 
+                                "createdOn"=> date("Y-m-d H:i:s"), 
+                                "id_vehsection"=> 1);
+
+     InsertRec("fleet_issue", $array_feet_issues);
 
    }
 
    ################## images the report ################
 
 if(isset($_FILES['images']) && $_FILES['images']["name"] != ''){
-
   $cuenta_imagen = 0;
-
   foreach ($_FILES['images']['tmp_name'] as $key => $image_fiel) {
+    //$target_dir = "images/";
+    //$target_file = $target_dir . basename($_FILES['images']["name"][$key]);
+    //$imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+    //$filename = $target_dir . $insert.$cuenta_imagen.".".$imageFileType;
+    //$filenameThumbR = $target_dir . $insert.$cuenta_imagen."_thumb.".$imageFileType;
+    // comprobar que han seleccionado una foto
+    if($_FILES['images']['name'][$key] != ""){ // El campo foto contiene una imagen...
+        // Primero, hay que validar que se trata de un JPG/GIF/PNG
+        $allowedExts = array("jpg", "jpeg", "gif", "png", "JPG", "GIF", "PNG");
+        $extension = end(explode(".", $_FILES["images"]["name"][$key]));
+        if ((($_FILES["images"]["type"][$key] == "image/gif")
+                || ($_FILES["images"]["type"][$key] == "image/jpeg")
+                || ($_FILES["images"]["type"][$key] == "image/png")
+                || ($_FILES["images"]["type"][$key] == "image/pjpeg"))
+                && in_array($extension, $allowedExts)) {
+            // el archivo es un JPG/GIF/PNG, entonces...
+            $extension = end(explode('.', $_FILES['images']['name'][$key]));
+            $foto = substr(md5(uniqid(rand())),0,10).".".$extension;
+            $directorio = "images/"; //dirname(__FILE__); // directorio de tu elección
+            // almacenar imagen en el servidor
+            move_uploaded_file($_FILES['images']['tmp_name'][$key], $directorio.'/'.$foto);
+            $minFoto = 'min_'.$foto;
+            $resFoto = 'res_'.$foto;
+            //resizeImagen($directorio.'/', $foto, 65, 65,$minFoto,$extension);
+            resizeImagen($directorio.'/', $foto, 400, 400,$resFoto,$extension);
+            unlink($directorio.'/'.$foto);
+        } else { // El archivo no es JPG/GIF/PNG
+            $malformato = $_FILES["images"]["type"][$key];
+            //header("Location: cargarImagen.php?error=noFormato&formato=$malformato");
+            exit;
+          }
 
-       $target_dir = "images/";
-       $target_file = $target_dir . basename($_FILES['images']["name"][$key]);
-       $imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
-       $filename = $target_dir . $insert.$cuenta_imagen.".".$imageFileType;
-       $filenameThumbR = $target_dir . $insert.$cuenta_imagen."_thumb.".$imageFileType;
-       if (move_uploaded_file($_FILES['images']["tmp_name"][$key], $filename)){
-           //makeThumbnailsWithGivenWidthHeight($target_dir, $imageFileType, $nId, 600, 400);
-           InsertRec("image_issue", array("rute" => $filenameThumbR,
+    }
+       //if (move_uploaded_file($_FILES['images']["tmp_name"][$key], $filename)){
+          // makeThumbnailsWithGivenWidthHeight($target_dir, $imageFileType, $nId, 600, 400);
+           InsertRec("image_issue", array("rute" => $directorio.'res_'.$foto, //$filenameThumbR,
                                           "id_report" => $insert,
                                           "date_time" => date("Y-m-d H:i:s")));
 
            $cuenta_imagen++;
-
-      }
+      //}
    }
 }
 
@@ -145,7 +219,7 @@ if(isset($_FILES['images']) && $_FILES['images']["name"] != ''){
       $subject = 'Reporte Ramen Taller';
       //$fileName = $nomrbe_archivo.'.pdf';
       //$email_ventas = "tayron.arrieta@gruasshl.com";
-      //$personas = "tayronperez17@gmail.com taller@gruasshl.com";
+      //$personas = "tayronperez17@gmail.com";
       $email_ventas = "taller@gruasshl.com";
       $personas = "call.center@gruasshl.com";
       $to = $email_ventas.' ,'.$personas;
